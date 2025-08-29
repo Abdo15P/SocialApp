@@ -32,6 +32,7 @@ exports.validation = validation;
 exports.generalFields = {
     username: zod_1.z.string().min(2, { error: "min username length is 2 chars" }).max(20),
     email: zod_1.z.email(),
+    otp: zod_1.z.string().regex(/^\d{6}$/),
     password: zod_1.z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/),
     confirmPassword: zod_1.z.string(),
 };

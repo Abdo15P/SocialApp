@@ -11,9 +11,10 @@ const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const express_rate_limit_1 = require("express-rate-limit");
 const auth_controller_1 = __importDefault(require("./modules/auth/auth.controller"));
+const user_controller_1 = __importDefault(require("./modules/user/user.controller"));
 const error_response_1 = require("./utils/response/error.response");
 const connection_db_1 = __importDefault(require("./DB/connection.db"));
-const bootstrap = () => {
+const bootstrap = async () => {
     const app = (0, express_1.default)();
     const port = process.env.PORT || 5000;
     app.use((0, cors_1.default)());
@@ -26,11 +27,12 @@ const bootstrap = () => {
         statusCode: 429
     });
     app.use(limiter);
-    connection_db_1.default.connect();
+    await (0, connection_db_1.default)();
     app.get("/", (req, res) => {
         res.json({ message: "Welcome to Social App" });
     });
     app.use("/auth", auth_controller_1.default);
+    app.use("/user", user_controller_1.default);
     app.use("/*dummy", (req, res) => {
         res.status(404).json({ message: "Invalid routing. Please check metod and url" });
     });

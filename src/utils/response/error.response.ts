@@ -26,13 +26,25 @@ export class NotFoundException extends  ApplicationException {
     }
 }
 
-export class EmailExistsException extends  ApplicationException {
+export class ConflictException extends  ApplicationException {
     constructor(message:string, cause?: unknown){
         super(message,409,cause)
         
     }
 }
 
+export class UnaurhorizedException extends  ApplicationException {
+    constructor(message:string, cause?: unknown){
+        super(message,401,cause)
+        
+    }
+}
+export class ForbiddenException extends  ApplicationException {
+    constructor(message:string, cause?: unknown){
+        super(message,403,cause)
+        
+    }
+}
 export const globalErrorHandling =(error:IError, req:Request,res:Response, next:NextFunction)=>{
         return res.status(error.statusCode || 500).json({err_message: error.message || "something went wrong", stack:process.env.MOOD==="development"? error.stack:undefined,cause:error.cause, error})
     }

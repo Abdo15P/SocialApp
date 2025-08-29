@@ -1,52 +1,22 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserModel = exports.providerEnum = exports.roleEnum = exports.genderEnum = void 0;
-const mongoose_1 = __importStar(require("mongoose"));
-exports.genderEnum = {
-    male: "male",
-    female: "female"
-};
-exports.roleEnum = {
-    user: "user",
-    admin: "admin"
-};
-exports.providerEnum = {
-    system: "system",
-    google: "google"
-};
+exports.UserModel = exports.ProviderEnum = exports.RoleEnum = exports.GenderEnum = void 0;
+const mongoose_1 = require("mongoose");
+var GenderEnum;
+(function (GenderEnum) {
+    GenderEnum["male"] = "male";
+    GenderEnum["female"] = "female";
+})(GenderEnum || (exports.GenderEnum = GenderEnum = {}));
+var RoleEnum;
+(function (RoleEnum) {
+    RoleEnum["user"] = "user";
+    RoleEnum["admin"] = "admin";
+})(RoleEnum || (exports.RoleEnum = RoleEnum = {}));
+var ProviderEnum;
+(function (ProviderEnum) {
+    ProviderEnum["system"] = "system";
+    ProviderEnum["google"] = "google";
+})(ProviderEnum || (exports.ProviderEnum = ProviderEnum = {}));
 const userSchema = new mongoose_1.Schema({
     firstName: {
         type: String,
@@ -61,25 +31,45 @@ const userSchema = new mongoose_1.Schema({
         maxLength: [20, "last name max length is 20 chars"]
     },
     email: { type: String, required: true, unique: true },
+    confirmEmailOtp: { type: String },
+    confirmedAt: { type: Date },
     password: {
         type: String,
-        required: true
+        required: function () {
+            return this.provider === ProviderEnum.google ? false : true;
+        }
     },
+    resetPasswordOtp: { type: String },
+    changeCredentialsTime: { type: Date },
+    phone: { type: String },
+    address: { type: String },
+    profileImage: { type: String },
+    coverImages: [String],
     gender: {
         type: String,
-        enum: {
-            values: Object.values(exports.genderEnum),
-            message: `only ${Object.values(exports.genderEnum)}`
-        },
-        default: exports.genderEnum.male
+        enum: GenderEnum,
+        default: GenderEnum.male
     },
-    confirmEmail: Date,
-    confirmEmailOtp: String,
-    otpStartTime: String,
+    role: {
+        type: String,
+        enum: RoleEnum,
+        default: RoleEnum.user
+    },
+    provider: {
+        type: String,
+        enum: ProviderEnum,
+        default: ProviderEnum.system
+    },
 }, {
     timestamps: true,
     toObject: { virtuals: true },
     toJSON: { virtuals: true }
 });
-exports.UserModel = mongoose_1.default.models.User || mongoose_1.default.model("User", userSchema);
+userSchema.virtual("username").set(function (value) {
+    const [firstName, lastName] = value.split(" ") || [];
+    this.set({ firstName, lastName });
+}).get(function () {
+    return this.firstName + " " + this.lastName;
+});
+exports.UserModel = mongoose_1.models.User || (0, mongoose_1.model)("User", userSchema);
 exports.UserModel.syncIndexes();

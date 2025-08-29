@@ -10,12 +10,14 @@ import cors from "cors"
 import helmet from "helmet"
 import {rateLimit} from "express-rate-limit"
 import authController from "./modules/auth/auth.controller"
+import userController from "./modules/user/user.controller"
 import { globalErrorHandling } from './utils/response/error.response'
-import db from './DB/connection.db'
+import connectDB from './DB/connection.db'
+// import db from './DB/connection.db'
 
 
 
-const  bootstrap=(): void =>{
+const  bootstrap= async(): Promise<void> =>{
     const app: Express = express()
 
     const port: number | string =process.env.PORT || 5000
@@ -30,11 +32,13 @@ const  bootstrap=(): void =>{
         statusCode:429
     })
     app.use(limiter)
-    db.connect()
+    //db.connect()
+    await connectDB()
     app.get("/",(req:Request,res:Response)=>{
         res.json({message:"Welcome to Social App"})
     })
     app.use("/auth",authController)
+    app.use("/user",userController)
 
     app.use("/*dummy",(req:Request,res:Response)=>{
         res.status(404).json({message:"Invalid routing. Please check metod and url"})

@@ -1,46 +1,45 @@
-import mongoose, { ConnectOptions } from "mongoose";
+import { connect} from "mongoose";
+import { UserModel } from "./models/User.model";
 
 
-class Database {
+// class Database {
 
-  constructor() {}
+//   constructor() {}
 
-  public async connect(): Promise<void> {
-    try {
-      const uri = process.env.DB_URI;
-      if (!uri) {
-        throw new Error("DB_URI environment variable is not defined");
-      }
+//   public async connect(): Promise<void> {
+//     try {
+//       const uri = process.env.DB_URI;
+//       if (!uri) {
+//         throw new Error("DB_URI environment variable is not defined");
+//       }
 
-      const options: ConnectOptions = {
-        serverSelectionTimeoutMS: 30000,
-      };
+//       const options: ConnectOptions = {
+//         serverSelectionTimeoutMS: 30000,
+//       };
 
-      await mongoose.connect(uri, options);
+//       await mongoose.connect(uri, options);
       
-      console.log("Database connected successfully");
-    } catch (error) {
-      console.error("Failed to connect to database:", error);
+//       console.log("Database connected successfully");
+//     } catch (error) {
+//       console.error("Failed to connect to database:", error);
       
-    }
-  }
+//     }
+//   }
 
-}
-
-export default new Database();
-
-// Usage example
-// import Database from "./database";
-
-// const db = Database.getInstance();
-
-// // Connect to database
-// try {
-  
-//   console.log("Connection status:", db.getConnectionStatus());
-// } catch (error) {
-//   console.error("Connection failed");
 // }
 
-// // Later, when you need to disconnect
-// // await db.disconnect();
+// export default new Database();
+
+const connectDB =async():Promise<void>=>{
+  try{
+    const result= await connect(process.env.DB_URI as string,{
+      serverSelectionTimeoutMS:30000,
+    })
+    await UserModel.syncIndexes()
+    console.log(result.models)
+    console.log("DB connected successfully")
+  }catch(error){
+    console.log("Failed to connect to DB")
+  }
+}
+export default connectDB

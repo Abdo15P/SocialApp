@@ -44,6 +44,7 @@ export const validation=(schema: SchemaType)=>{
 export const generalFields={
     username: z.string().min(2,{error:"min username length is 2 chars"}).max(20),
             email:z.email(),
+            otp:z.string().regex(/^\d{6}$/),
             password: z.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/),
             confirmPassword: z.string(),
 }

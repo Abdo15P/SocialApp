@@ -1,26 +1,18 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const mongoose_1 = __importDefault(require("mongoose"));
-class Database {
-    constructor() { }
-    async connect() {
-        try {
-            const uri = process.env.DB_URI;
-            if (!uri) {
-                throw new Error("DB_URI environment variable is not defined");
-            }
-            const options = {
-                serverSelectionTimeoutMS: 30000,
-            };
-            await mongoose_1.default.connect(uri, options);
-            console.log("Database connected successfully");
-        }
-        catch (error) {
-            console.error("Failed to connect to database:", error);
-        }
+const mongoose_1 = require("mongoose");
+const User_model_1 = require("./models/User.model");
+const connectDB = async () => {
+    try {
+        const result = await (0, mongoose_1.connect)(process.env.DB_URI, {
+            serverSelectionTimeoutMS: 30000,
+        });
+        await User_model_1.UserModel.syncIndexes();
+        console.log(result.models);
+        console.log("DB connected successfully");
     }
-}
-exports.default = new Database();
+    catch (error) {
+        console.log("Failed to connect to DB");
+    }
+};
+exports.default = connectDB;

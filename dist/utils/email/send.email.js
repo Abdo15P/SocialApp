@@ -1,23 +1,23 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendEmail = sendEmail;
-const nodemailer_1 = __importDefault(require("nodemailer"));
-async function sendEmail({ from = process.env.APP_EMAIL, to = "", cc = "", bcc = "", text = "", html = "", subject = "Saraha App", attachments = [] } = {}) {
-    const transporter = nodemailer_1.default.createTransport({
+exports.sendEmail = void 0;
+const nodemailer_1 = require("nodemailer");
+const error_response_1 = require("../response/error.response");
+const sendEmail = async (data) => {
+    if (!data.html && !data.attachments?.length && !data.text) {
+        throw new error_response_1.BadRequestException("Missing Email content");
+    }
+    const transporter = (0, nodemailer_1.createTransport)({
         service: "gmail",
         auth: {
-            user: process.env.APP_EMAIL,
-            pass: process.env.APP_PASSWORD,
-        },
+            user: process.env.EMAIL,
+            pass: process.env.EMAIL_PASSWORD
+        }
     });
     const info = await transporter.sendMail({
-        from: `"Saraha App Team" <${from}>`,
-        to, cc, bcc,
-        subject,
-        text, html,
-        attachments,
+        ...data,
+        from: `"${process.env.APPLICATION_NAME}" <${process.env.EMAIL}>`
     });
-}
+    console.log("Message sent:", info.messageId);
+};
+exports.sendEmail = sendEmail;
