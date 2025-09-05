@@ -2,7 +2,7 @@
 
 import { ProviderEnum, UserModel } from './../../DB/models/User.model';
 
-import { IConfirmEmailBodyInputsDTO, IForgotCodeInputsDTO, IGmail, ILoginBodyInputsDTO, ISignupBodyInputsDTO, IVerifyForgotCodeInputsDTO } from './auth.dto';
+import { IConfirmEmailBodyInputsDTO, IForgotCodeInputsDTO, IGmail, ILoginBodyInputsDTO, IResetForgotCodeInputsDTO, ISignupBodyInputsDTO, IVerifyForgotCodeInputsDTO } from './auth.dto';
 
 import type { Request,Response } from "express"
 // import * as DBService from "../../DB/db.service"
@@ -11,9 +11,11 @@ import { createLoginCredentials } from '../../utils/security/token.security';
 import { UserRepository } from '../../DB/repository/user.repository';
 import { BadRequestException, ConflictException, NotFoundException } from '../../utils/response/error.response';
 import { generateHash,compareHash } from '../../utils/security/hash.security';
-import { emailEvent } from '../../utils/event/email.event';
+import { emailEvent } from '../../utils/email/email.event';
 import { generateNumberotp } from '../../utils/otp';
 import { OAuth2Client,type TokenPayload } from 'google-auth-library';
+import { successResponse } from '../../utils/response/success.response';
+import { ILoginResponse } from './auth.entities';
 class AuthenticationService {
     private userModel= new UserRepository(UserModel)
     constructor(){}
@@ -36,7 +38,7 @@ class AuthenticationService {
     signupWithGmail=async(req:Request,res:Response):Promise<Response>=>{
 
         const {idToken}:IGmail=req.body
-        const{ email,family_name,given_name,name,picture}= await this.verifyGmailAccount(idToken)
+        const{ email,family_name,given_name,picture}= await this.verifyGmailAccount(idToken)
 
         const user= await this.userModel.findOne({
             filter:{
@@ -69,7 +71,7 @@ class AuthenticationService {
         }
 
         const credentials = await createLoginCredentials(newUser)
-        return res.status(201).json({message:"Done",daa:{credentials}})
+         return successResponse<ILoginResponse>({res,statusCode:201,data: {credentials}})
     }
 
     loginWithGmail=async(req:Request,res:Response):Promise<Response>=>{
@@ -90,7 +92,7 @@ class AuthenticationService {
 
 
         const credentials = await createLoginCredentials(user)
-        return res.json({message:"Done",daa:{credentials}})
+         return successResponse<ILoginResponse>({res,data: {credentials}})
     }
 
     signup=async (req:Request,res:Response):Promise<Response> =>{
@@ -103,20 +105,20 @@ class AuthenticationService {
             select:"email",
             options:{
                 lean:true,
-                // populate:[{path:"username"}]
+                
             }
         })
         if(checkUserExists){
             throw new ConflictException("Emails exists")
         }
         const otp= generateNumberotp()
-    const user = await this.userModel.createUser({
+        await this.userModel.createUser({
         data:[{username,email,password: await generateHash(password),confirmEmailOtp:await generateHash(String(otp))}],
        
     }) 
        
     emailEvent.emit("confirmEmail",{to:email,otp})
-    return res.status(201).json({message:"Done", data: {user}})
+    return successResponse({res,statusCode:201})
 
     
 }
@@ -144,7 +146,7 @@ confirmEmail=async (req:Request,res:Response):Promise<Response> =>{
             $unset:{confirmEmailOtp:1}
         }
     })
-    return res.json({message:"Done"})
+    return successResponse({res})
 }
 
 login=async (req:Request,res:Response):Promise<Response> =>{
@@ -163,7 +165,7 @@ login=async (req:Request,res:Response):Promise<Response> =>{
         throw new NotFoundException("Invalid login data")
     }
     const credentials= await createLoginCredentials(user)
-    return res.json({message:"Done",data: {credentials}})
+    return successResponse<ILoginResponse>({res,data: {credentials}})
 }
 
 sendForgotCode=async (req:Request,res:Response):Promise<Response> =>{
@@ -193,7 +195,7 @@ sendForgotCode=async (req:Request,res:Response):Promise<Response> =>{
     
     emailEvent.emit("resetPassord",{to:email,otp})
     
-    return res.json({message:"Done"})
+    return successResponse({res})
 }
 
 verifyForgotCode=async (req:Request,res:Response):Promise<Response> =>{
@@ -214,11 +216,11 @@ verifyForgotCode=async (req:Request,res:Response):Promise<Response> =>{
     }
    
     
-    return res.json({message:"Done"})
+    return successResponse({res})
 }
 
 resetForgotCode=async (req:Request,res:Response):Promise<Response> =>{
-    const {email,otp,password}:IresetForgotCodeInputsDTO=req.body
+    const {email,otp,password}:IResetForgotCodeInputsDTO=req.body
     const user = await this.userModel.findOne({
         filter:{
             email,
@@ -247,7 +249,7 @@ resetForgotCode=async (req:Request,res:Response):Promise<Response> =>{
         throw new BadRequestException("Failed to reset account password. PLease try again later")
     }
     
-    return res.json({message:"Done"})
+    return successResponse({res})
 }
 
 
