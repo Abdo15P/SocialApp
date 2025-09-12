@@ -52,6 +52,9 @@ router.delete("/:userId", (0, authentication_middleware_1.authorization)(user_au
 router.patch("/:userId/restore-account", (0, authentication_middleware_1.authorization)(user_authorization_1.endpoint.restoreAccount), (0, validation_middleware_1.validation)(validators.restoreAccount), user_service_1.default.restoreAccount);
 router.patch("/profile-image", (0, authentication_middleware_1.authentication)(), user_service_1.default.profileImage);
 router.patch("/profile-cover-image", (0, authentication_middleware_1.authentication)(), (0, cloud_multer_2.cloudFileUpload)({ validation: cloud_multer_1.fileValidation.image, storageApproach: cloud_multer_2.StorageEnum.memory }).array("images", 2), user_service_1.default.profileCoverImage);
+router.patch("/", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.updateBasicInfo), user_service_1.default.updateBasicInfo);
+router.patch("/password", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.updatePassword), user_service_1.default.updatePassword);
+router.patch("/email", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.updateEmail), user_service_1.default.updateEmail);
 router.post("/refresh-token", (0, authentication_middleware_1.authentication)(token_security_1.TokenEnum.refresh), user_service_1.default.refreshToken);
 router.post("/logout", (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.logout), user_service_1.default.logout);
 exports.default = router;

@@ -2,15 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const User_model_1 = require("./../../DB/models/User.model");
 const token_security_1 = require("../../utils/security/token.security");
-const user_repository_1 = require("../../DB/repository/user.repository");
 const error_response_1 = require("../../utils/response/error.response");
 const hash_security_1 = require("../../utils/security/hash.security");
 const email_event_1 = require("../../utils/email/email.event");
 const otp_1 = require("../../utils/otp");
 const google_auth_library_1 = require("google-auth-library");
 const success_response_1 = require("../../utils/response/success.response");
+const repository_1 = require("../../DB/repository");
 class AuthenticationService {
-    userModel = new user_repository_1.UserRepository(User_model_1.UserModel);
+    userModel = new repository_1.UserRepository(User_model_1.UserModel);
     constructor() { }
     async verifyGmailAccount(idToken) {
         const client = new google_auth_library_1.OAuth2Client();
@@ -85,7 +85,7 @@ class AuthenticationService {
         }
         const otp = (0, otp_1.generateNumberotp)();
         await this.userModel.createUser({
-            data: [{ username, email, password: await (0, hash_security_1.generateHash)(password), confirmEmailOtp: await (0, hash_security_1.generateHash)(String(otp)) }],
+            data: [{ username, email, password, confirmEmailOtp: `${otp}` }],
         });
         email_event_1.emailEvent.emit("confirmEmail", { to: email, otp });
         return (0, success_response_1.successResponse)({ res, statusCode: 201 });

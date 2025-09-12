@@ -18,6 +18,10 @@ router.patch("/:userId/restore-account",authorization(endpoint.restoreAccount),v
 router.patch("/profile-image",authentication(),userService.profileImage)
 router.patch("/profile-cover-image",authentication(),cloudFileUpload({validation:fileValidation.image,storageApproach:StorageEnum.memory}).array("images",2),userService.profileCoverImage)
 
+router.patch("/",authentication(),validation(validators.updateBasicInfo),userService.updateBasicInfo)
+router.patch("/password",authentication(),validation(validators.updatePassword),userService.updatePassword)
+router.patch("/email",authentication(),validation(validators.updateEmail),userService.updateEmail)
+
 router.post("/refresh-token",authentication(TokenEnum.refresh),userService.refreshToken)
 router.post("/logout",authentication(),validation(validators.logout),userService.logout)
 export default router

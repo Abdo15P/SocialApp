@@ -1,3 +1,4 @@
+
 import {Request,Response} from 'express'
 import { UserRepository } from '../../DB/repository/user.repository'
 import { HUserDocument, IUser, RoleEnum, UserModel } from '../../DB/models/User.model'
@@ -13,6 +14,7 @@ import { s3Event } from '../../utils/multer/s3.events'
 import { successResponse } from '../../utils/response/success.response'
 import { IProfileImageResponse, IUserResponse } from './user.entities'
 import { ILoginResponse } from '../auth/auth.entities'
+
 
 
 class UserService {
@@ -78,6 +80,64 @@ class UserService {
             throw new UnauthorizedException("missing user details")
         }
         return successResponse<IUserResponse>({res,data:{user:req.user}})
+    }
+
+    updateBasicInfo=async (req:Request,res:Response):Promise<Response>=>{
+        
+        const user = await this.userModel.findOneAndUpdate({
+            filter:{
+                _id: req.user?._id
+            },
+            update:req.body
+        })
+        
+       if(!user){
+            throw new NotFoundException("user not found or failed to update this resource")
+        }
+
+        return successResponse({res})
+    }
+
+    updatePassword=async (req:Request,res:Response):Promise<Response>=>{
+        
+        const {password}=req.body
+        
+        const user = await this.userModel.findOneAndUpdate({
+            filter:{
+                _id: req.user?._id
+            },
+            update:{
+                password:password,
+            }
+
+        })
+
+         if(!user){
+            throw new NotFoundException("user not found or failed to update password")
+        }
+
+        return successResponse({res})
+    }
+
+    updateEmail=async (req:Request,res:Response):Promise<Response>=>{
+        
+        const {email}=req.body
+        
+        const user = await this.userModel.findOneAndUpdate({
+            filter:{
+                _id: req.user?._id
+            },
+            update:{
+                email:email,
+            }
+
+        })
+
+         if(!user){
+            throw new NotFoundException("user not found or failed to update email")
+        }
+
+        return successResponse({res})
     }
 
 

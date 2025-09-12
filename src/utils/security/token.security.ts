@@ -1,11 +1,10 @@
 import { HUserDocument, RoleEnum, UserModel } from '../../DB/models/User.model';
-import { UserRepository } from '../../DB/repository/user.repository';
-import { BadRequestException, UnaurhorizedException } from '../response/error.response';
+import { UserRepository,TokenRepository } from '../../DB/repository';
+import { BadRequestException, UnauthorizedException } from '../response/error.response';
 import {v4 as uuid} from 'uuid'
 import { JwtPayload,Secret,SignOptions } from 'jsonwebtoken';
 import { sign,verify } from "jsonwebtoken";
 import { HTokenDocument, TokenModel } from '../../DB/models/Token.model';
-import { TokenRepository } from '../../DB/repository/token.repository';
 
 export enum SignatureLevelEnum {
     Bearer="Bearer",
@@ -107,7 +106,7 @@ export const decodeToken= async({
     const tokenModel= new TokenRepository(TokenModel)
     const [bearerKey,token]=authorization.split(" ")
     if(!bearerKey || !token){
-        throw new UnaurhorizedException("missing token parts")
+        throw new UnauthorizedException("missing token parts")
     }
     const signatures= await getSignatures(bearerKey as SignatureLevelEnum)
     const decoded = await verifyToken({
@@ -120,7 +119,7 @@ export const decodeToken= async({
     }
 
     if (await tokenModel.findOne({filter:{jti:decoded.jti}})){
-        throw new UnaurhorizedException("Invalid or old login credentials")
+        throw new UnauthorizedException("Invalid or old login credentials")
     }
 
 
@@ -130,7 +129,7 @@ export const decodeToken= async({
     }
 
      if ((user.changeCredentialsTime?.getTime() || 0) > decoded.iat *1000){
-        throw new UnaurhorizedException("Invalid or old login credentials")
+        throw new UnauthorizedException("Invalid or old login credentials")
     }
 
     return {user,decoded}

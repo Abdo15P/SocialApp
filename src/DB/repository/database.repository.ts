@@ -24,6 +24,47 @@ export abstract class DatabaseRepository<TDocument>{
         return await doc.exec()
     }
 
+     async findById({
+        id,
+        select,
+        options,
+    }:{
+        id:RootFilterQuery<TDocument>
+        select?:ProjectionType<TDocument> | null
+        options?: QueryOptions<TDocument> | null
+    }): Promise <Lean<TDocument> | HydratedDocument<TDocument> | null>{
+        const doc= this.model.findById(id).select(select || "")
+        if(options?.populate){
+            doc.populate(options.populate as PopulateOptions[])
+        }
+        if(options?.lean){
+            doc.lean(options.lean)
+        }
+        return await doc.exec()
+    }
+
+    async find({
+        filter,
+        select,
+        options,
+    }:{
+        filter?:RootFilterQuery<TDocument>
+        select?:ProjectionType<TDocument> | null
+        options?: QueryOptions<TDocument> | null
+    }): Promise <Lean<TDocument>[] | HydratedDocument<TDocument>[] | []>{
+        const doc= this.model.find(filter || {}).select(select || "")
+        if(options?.populate){
+            doc.populate(options.populate as PopulateOptions[])
+        }
+        if(options?.skip){
+            doc.skip(options.skip)
+        }
+        if(options?.limit){
+            doc.limit(options.limit)
+        }
+        return await doc.exec()
+    }
+
     async create({
         data,
         options,
@@ -56,6 +97,18 @@ export abstract class DatabaseRepository<TDocument>{
         options?: QueryOptions<TDocument> | null
     }): Promise<HydratedDocument<TDocument>| Lean<TDocument> | null>{
         return this.model.findByIdAndUpdate(id,{...update, $inc:{__v:1}},options)
+    }
+
+    async findOneAndUpdate({
+        filter,
+        update,
+        options={new:true},
+    }:{
+        filter?:RootFilterQuery<TDocument>;
+        update?: UpdateQuery<TDocument>;
+        options?: QueryOptions<TDocument> | null
+    }): Promise<HydratedDocument<TDocument>| Lean<TDocument> | null>{
+        return this.model.findOneAndUpdate(filter,{...update, $inc:{__v:1}},options)
     }
 
      async deleteOne({

@@ -1,4 +1,7 @@
+
 import  { HydratedDocument, Schema, model,models,Types} from "mongoose";
+import { generateHash } from "../../utils/security/hash.security";
+import { emailEvent } from "../../utils/email/email.event";
 
 
 export enum GenderEnum {
@@ -23,6 +26,7 @@ export interface IUser {
   lastName: string;
   username?: string;
 
+  //slug:string;
   email: string;
   confirmedAt?: Date;
   confirmEmailOtp?: string;
@@ -67,6 +71,7 @@ const userSchema = new Schema<IUser>({
     maxLength: [20, "last name max length is 20 chars"]
   },
   
+  //slug: { type: String, required: true, minLength:5, maxLength:51 },
   email: { type: String, required: true, unique: true },
   confirmEmailOtp:{type:String},
   confirmedAt:{type:Date},
@@ -118,6 +123,39 @@ userSchema.virtual("username").set(function (value:string){
   this.set({firstName,lastName})
 }).get(function (){
   return this.firstName + " " + this.lastName
+})
+
+userSchema.pre("save",async function(this:HUserDocument &{wasNew:boolean; confirmEmailPlainOtp?: string}, next){
+  
+  this.wasNew=this.isNew
+  if(this.isModified("password")){
+    this.password = await generateHash(this.password)
+  }
+  if(this.isModified("confirmEmailOtp")){
+    this.confirmEmailPlainOtp=this.confirmEmailOtp as string
+    this.confirmEmailOtp = await generateHash(this.confirmEmailOtp as string)
+  }
+
+  next()
+})
+
+userSchema.post("save",async function(doc,next){
+  const that= this as HUserDocument & {wasNew:boolean; confirmEmailPlainOtp?: string}
+  
+  if(that.wasNew && that.confirmEmailPlainOtp){
+    emailEvent.emit("confirmEmail",{to:this.email,otp:that.confirmEmailPlainOtp})
+  }
+  next()
+})
+
+userSchema.pre(["find","findOne"],function(next){
+  const query= this.getQuery()
+  if(query.paranoid===false){
+    this.setQuery({...query})
+  }else{
+    this.setQuery({...query,freezedAt:{$exists:false}})
+  }
+  next()
 })
 
 

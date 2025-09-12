@@ -2,12 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createRevokeToken = exports.decodeToken = exports.createLoginCredentials = exports.getSignatures = exports.detectSignatureLevel = exports.verifyToken = exports.generateToken = exports.logoutEnum = exports.TokenEnum = exports.SignatureLevelEnum = void 0;
 const User_model_1 = require("../../DB/models/User.model");
-const user_repository_1 = require("../../DB/repository/user.repository");
+const repository_1 = require("../../DB/repository");
 const error_response_1 = require("../response/error.response");
 const uuid_1 = require("uuid");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const Token_model_1 = require("../../DB/models/Token.model");
-const token_repository_1 = require("../../DB/repository/token.repository");
 var SignatureLevelEnum;
 (function (SignatureLevelEnum) {
     SignatureLevelEnum["Bearer"] = "Bearer";
@@ -80,11 +79,11 @@ const createLoginCredentials = async (user) => {
 };
 exports.createLoginCredentials = createLoginCredentials;
 const decodeToken = async ({ authorization, tokenType = TokenEnum.access }) => {
-    const userModel = new user_repository_1.UserRepository(User_model_1.UserModel);
-    const tokenModel = new token_repository_1.TokenRepository(Token_model_1.TokenModel);
+    const userModel = new repository_1.UserRepository(User_model_1.UserModel);
+    const tokenModel = new repository_1.TokenRepository(Token_model_1.TokenModel);
     const [bearerKey, token] = authorization.split(" ");
     if (!bearerKey || !token) {
-        throw new error_response_1.UnaurhorizedException("missing token parts");
+        throw new error_response_1.UnauthorizedException("missing token parts");
     }
     const signatures = await (0, exports.getSignatures)(bearerKey);
     const decoded = await (0, exports.verifyToken)({
@@ -95,20 +94,20 @@ const decodeToken = async ({ authorization, tokenType = TokenEnum.access }) => {
         throw new error_response_1.BadRequestException("Invalid token payload");
     }
     if (await tokenModel.findOne({ filter: { jti: decoded.jti } })) {
-        throw new error_response_1.UnaurhorizedException("Invalid or old login credentials");
+        throw new error_response_1.UnauthorizedException("Invalid or old login credentials");
     }
     const user = await userModel.findOne({ filter: { _id: decoded._id } });
     if (!user) {
         throw new error_response_1.BadRequestException("Account not registered");
     }
     if ((user.changeCredentialsTime?.getTime() || 0) > decoded.iat * 1000) {
-        throw new error_response_1.UnaurhorizedException("Invalid or old login credentials");
+        throw new error_response_1.UnauthorizedException("Invalid or old login credentials");
     }
     return { user, decoded };
 };
 exports.decodeToken = decodeToken;
 const createRevokeToken = async (decoded) => {
-    const tokenModel = new token_repository_1.TokenRepository(Token_model_1.TokenModel);
+    const tokenModel = new repository_1.TokenRepository(Token_model_1.TokenModel);
     const [result] = await tokenModel.create({
         data: [
             {

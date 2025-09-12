@@ -9,8 +9,10 @@ import type {Request, Express,Response} from "express"
 import cors from "cors"
 import helmet from "helmet"
 import {rateLimit} from "express-rate-limit"
-import authController from "./modules/auth/auth.controller"
-import userController from "./modules/user/user.controller"
+
+import { authRouter,userRouter,postRouter } from './modules'
+// import authController from "./modules/auth/auth.controller"
+// import userController from "./modules/user/user.controller"
 import { BadRequestException, globalErrorHandling } from './utils/response/error.response'
 import connectDB from './DB/connection.db'
 import { createGetPreSignedLink, getFile } from './utils/multer/s3.config'
@@ -39,12 +41,16 @@ const  bootstrap= async(): Promise<void> =>{
     app.use(limiter)
     //db.connect()
     await connectDB()
+
+    
+
+
     app.get("/",(req:Request,res:Response)=>{
         res.json({message:"Welcome to Social App"})
     })
-    app.use("/auth",authController)
-    app.use("/user",userController)
-
+    app.use("/auth",authRouter)
+    app.use("/user",userRouter)
+    app.use("/post",postRouter)
 
 
     app.get("upload/pre-signed/*path",async(req:Request,res:Response):Promise<Response>=>{

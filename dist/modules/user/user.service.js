@@ -58,6 +58,48 @@ class UserService {
         }
         return (0, success_response_1.successResponse)({ res, data: { user: req.user } });
     };
+    updateBasicInfo = async (req, res) => {
+        const user = await this.userModel.findOneAndUpdate({
+            filter: {
+                _id: req.user?._id
+            },
+            update: req.body
+        });
+        if (!user) {
+            throw new error_response_1.NotFoundException("user not found or failed to update this resource");
+        }
+        return (0, success_response_1.successResponse)({ res });
+    };
+    updatePassword = async (req, res) => {
+        const { password } = req.body;
+        const user = await this.userModel.findOneAndUpdate({
+            filter: {
+                _id: req.user?._id
+            },
+            update: {
+                password: password,
+            }
+        });
+        if (!user) {
+            throw new error_response_1.NotFoundException("user not found or failed to update password");
+        }
+        return (0, success_response_1.successResponse)({ res });
+    };
+    updateEmail = async (req, res) => {
+        const { email } = req.body;
+        const user = await this.userModel.findOneAndUpdate({
+            filter: {
+                _id: req.user?._id
+            },
+            update: {
+                email: email,
+            }
+        });
+        if (!user) {
+            throw new error_response_1.NotFoundException("user not found or failed to update email");
+        }
+        return (0, success_response_1.successResponse)({ res });
+    };
     freezeAccount = async (req, res) => {
         const { userId } = req.params || {};
         if (userId && req.user?.role !== User_model_1.RoleEnum.admin) {

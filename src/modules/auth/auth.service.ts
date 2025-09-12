@@ -8,7 +8,7 @@ import type { Request,Response } from "express"
 // import * as DBService from "../../DB/db.service"
 
 import { createLoginCredentials } from '../../utils/security/token.security';
-import { UserRepository } from '../../DB/repository/user.repository';
+
 import { BadRequestException, ConflictException, NotFoundException } from '../../utils/response/error.response';
 import { generateHash,compareHash } from '../../utils/security/hash.security';
 import { emailEvent } from '../../utils/email/email.event';
@@ -16,6 +16,7 @@ import { generateNumberotp } from '../../utils/otp';
 import { OAuth2Client,type TokenPayload } from 'google-auth-library';
 import { successResponse } from '../../utils/response/success.response';
 import { ILoginResponse } from './auth.entities';
+import {UserRepository} from '../../DB/repository'
 class AuthenticationService {
     private userModel= new UserRepository(UserModel)
     constructor(){}
@@ -113,7 +114,7 @@ class AuthenticationService {
         }
         const otp= generateNumberotp()
         await this.userModel.createUser({
-        data:[{username,email,password: await generateHash(password),confirmEmailOtp:await generateHash(String(otp))}],
+        data:[{username,email,password,confirmEmailOtp:`${otp}`}],
        
     }) 
        
