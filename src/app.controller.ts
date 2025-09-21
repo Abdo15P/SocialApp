@@ -73,7 +73,7 @@ const  bootstrap= async(): Promise<void> =>{
             throw new BadRequestException("Failes to fetch this asset")
         }
 
-
+        res.set("Cross-Origin-Resource-Policy","cross-origin")
         res.setHeader("Content-type",`${s3Response.ContentType || "application/octet-stream"}`)
         
         if(download==="true"){

@@ -36,9 +36,7 @@ const postSchema = new mongoose_2.Schema({
     restoredBy: [{ type: mongoose_2.Schema.Types.ObjectId, ref: "User" }],
 }, {
     timestamps: true,
-    strictQuery: true,
-    toObject: { virtuals: true },
-    toJSON: { virtuals: true }
+    strictQuery: true
 });
 postSchema.pre(["findOneAndUpdate", "updateOne"], function (next) {
     const query = this.getQuery();
@@ -59,11 +57,5 @@ postSchema.pre(["findOne", "find", "countDocuments"], function (next) {
         this.setQuery({ ...query, freezedAt: { $exists: false } });
     }
     next();
-});
-postSchema.virtual("comments", {
-    localField: "_id",
-    foreignField: "postId",
-    ref: "Comment",
-    justOne: true
 });
 exports.PostModel = mongoose_1.models.Post || (0, mongoose_1.model)("Post", postSchema);
