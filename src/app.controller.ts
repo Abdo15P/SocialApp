@@ -1,3 +1,4 @@
+
 import {resolve} from 'node:path'
 import {config} from 'dotenv'
 config({path: resolve("./config/.env.development")})
@@ -10,7 +11,7 @@ import cors from "cors"
 import helmet from "helmet"
 import {rateLimit} from "express-rate-limit"
 
-import { authRouter,userRouter,postRouter } from './modules'
+import { authRouter,userRouter,postRouter, initializeIo } from './modules'
 // import authController from "./modules/auth/auth.controller"
 // import userController from "./modules/user/user.controller"
 import { BadRequestException, globalErrorHandling } from './utils/response/error.response'
@@ -18,11 +19,23 @@ import connectDB from './DB/connection.db'
 import { createGetPreSignedLink, getFile } from './utils/multer/s3.config'
 import { promisify } from 'node:util'
 import { pipeline } from 'node:stream'
+import {  Socket } from 'socket.io'
 
+import { HUserDocument } from './DB/models';
+import { JwtPayload } from 'jsonwebtoken';
+import { chatRouter } from './modules/chat';
 
 // import db from './DB/connection.db'
 
 const createS3WriteStreamPipe= promisify(pipeline)
+const connectedSockets= new Map<string,string>()
+
+interface IAuthSocket extends Socket{
+    credentials?:{
+        user: Partial<HUserDocument>,
+        decoded: JwtPayload
+    }
+}
 
 const  bootstrap= async(): Promise<void> =>{
     const app: Express = express()
@@ -51,6 +64,7 @@ const  bootstrap= async(): Promise<void> =>{
     app.use("/auth",authRouter)
     app.use("/user",userRouter)
     app.use("/post",postRouter)
+    app.use("/chat",chatRouter)
 
 
     app.get("upload/pre-signed/*path",async(req:Request,res:Response):Promise<Response>=>{
@@ -94,9 +108,12 @@ const  bootstrap= async(): Promise<void> =>{
 
     app.use(globalErrorHandling)
 
-    app.listen(port,()=>{
+    const httpServer=app.listen(port,()=>{
         console.log(`Server running on port ${port}`)
     })
+
+    initializeIo(httpServer)
+
 }
 
 export default bootstrap

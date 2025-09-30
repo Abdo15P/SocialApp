@@ -12,6 +12,7 @@ const repository_1 = require("../../DB/repository");
 const models_1 = require("../../DB/models");
 class UserService {
     userModel = new user_repository_1.UserRepository(User_model_1.UserModel);
+    chatModel = new repository_1.ChatRepository(models_1.ChatModel);
     postModel = new repository_1.PostRepository(models_1.PostModel);
     friendRequestModel = new repository_1.FriendRequestRepository(models_1.FriendRequestModel);
     constructor() { }
@@ -57,7 +58,7 @@ class UserService {
         return (0, success_response_1.successResponse)({ res, statusCode: 201, data: { user } });
     };
     profile = async (req, res) => {
-        const profile = await this.userModel.findById({
+        const user = await this.userModel.findById({
             id: req.user?._id,
             options: {
                 populate: [
@@ -68,10 +69,16 @@ class UserService {
                 ]
             }
         });
-        if (!profile) {
+        if (!user) {
             throw new error_response_1.NotFoundException("failed to find user profile");
         }
-        return (0, success_response_1.successResponse)({ res, data: { user: profile } });
+        const groups = await this.chatModel.find({
+            filter: {
+                participants: { $in: req.user?._id },
+                group: { $exists: true }
+            }
+        });
+        return (0, success_response_1.successResponse)({ res, data: { user, groups } });
     };
     dashboard = async (req, res) => {
         const results = await Promise.allSettled([

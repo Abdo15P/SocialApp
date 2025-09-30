@@ -14,14 +14,15 @@ import { s3Event } from '../../utils/multer/s3.events'
 import { successResponse } from '../../utils/response/success.response'
 import { IProfileImageResponse, IUserResponse } from './user.entities'
 import { ILoginResponse } from '../auth/auth.entities'
-import { FriendRequestRepository, PostRepository } from '../../DB/repository'
-import { FriendRequestModel, PostModel } from '../../DB/models'
+import { ChatRepository, FriendRequestRepository, PostRepository } from '../../DB/repository'
+import { ChatModel, FriendRequestModel, PostModel } from '../../DB/models'
 
 
 
 class UserService {
-    private userModel= new UserRepository(UserModel)
-    private postModel= new PostRepository(PostModel)
+    private userModel:UserRepository= new UserRepository(UserModel)
+    private chatModel:ChatRepository= new ChatRepository(ChatModel)
+    private postModel:PostRepository= new PostRepository(PostModel)
     private friendRequestModel= new FriendRequestRepository(FriendRequestModel)
     
     constructor (){}
@@ -80,7 +81,7 @@ class UserService {
     }
 
     profile=async (req:Request,res:Response):Promise<Response>=>{
-        const profile= await this.userModel.findById({
+        const user= await this.userModel.findById({
             id:req.user?._id as Types.ObjectId,
             options:{
                 populate:[
@@ -92,10 +93,16 @@ class UserService {
             }
         })
 
-        if(!profile){
+        if(!user){
             throw new NotFoundException("failed to find user profile")
         }
-        return successResponse<IUserResponse>({res,data:{user:profile}})
+        const groups= await this.chatModel.find({
+            filter:{
+                participants:{$in: req.user?._id as Types.ObjectId},
+                group:{$exists: true}
+            }
+        })
+        return successResponse<IUserResponse>({res,data:{user,groups}})
     }
 
     dashboard=async (req:Request,res:Response):Promise<Response>=>{
