@@ -1,7 +1,7 @@
 
 import {Request,Response} from 'express'
 import { UserRepository } from '../../DB/repository/user.repository'
-import { HUserDocument, IUser, RoleEnum, UserModel } from '../../DB/models/User.model'
+import { GenderEnum, HUserDocument, RoleEnum, UserModel } from '../../DB/models/User.model'
 import { IFreezeAccountDto, IHardDeleteAccountDto, ILogoutDto, IRestoreAccountDto } from './user.dto'
 import {  UpdateQuery,Types } from 'mongoose'
 import { createLoginCredentials, createRevokeToken, logoutEnum } from '../../utils/security/token.security'
@@ -9,17 +9,34 @@ import { createLoginCredentials, createRevokeToken, logoutEnum } from '../../uti
 import { JwtPayload } from 'jsonwebtoken'
 import { createPreSignedUploadLink, deleteFiles, deleteFoldersByPrefix, uploadFiles } from '../../utils/multer/s3.config'
 import { StorageEnum } from '../../utils/multer/cloud.multer'
-import { BadRequestException, ConflictException, ForbiddenException, NotFoundException, UnauthorizedException } from '../../utils/response/error.response'
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '../../utils/response/error.response'
 import { s3Event } from '../../utils/multer/s3.events'
 import { successResponse } from '../../utils/response/success.response'
 import { IProfileImageResponse, IUserResponse } from './user.entities'
 import { ILoginResponse } from '../auth/auth.entities'
 import { ChatRepository, FriendRequestRepository, PostRepository } from '../../DB/repository'
 import { ChatModel, FriendRequestModel, PostModel } from '../../DB/models'
+import { GraphQLError } from 'graphql'
 
+export interface IUser{
+    id: number;
+    name: string;
+    email: string;
+    gender: GenderEnum;
+    password: string;
+    followers: number[]
+}
 
+let users:IUser[]=[{
+    id:1,
+    name:"m",
+    email:"m",
+    gender: GenderEnum.female,
+    password:"1",
+    followers:[]
+}]
 
-class UserService {
+export class UserService {
     private userModel:UserRepository= new UserRepository(UserModel)
     private chatModel:ChatRepository= new ChatRepository(ChatModel)
     private postModel:PostRepository= new PostRepository(PostModel)
@@ -365,6 +382,43 @@ class UserService {
         const credentials=await createLoginCredentials(req.user as HUserDocument)
         await createRevokeToken(req.decoded as JwtPayload)
         return successResponse<ILoginResponse>({res,statusCode:201,data:{credentials}})
+    }
+
+
+    //GRAPHQL
+
+    welcome=(user:HUserDocument):string=>{
+                    return "Hello graphql"
+                }
+
+    allusers=async (args:{gender: GenderEnum},authUser:HUserDocument):Promise<HUserDocument[]>=>{
+        return await this.userModel.find({
+            filter:{
+                _id:{$ne:authUser._id},
+                gender:args.gender
+            }
+        })
+    }
+
+    search=(args:{email:string}):{message:string;statusCode:number;data:IUser}=>{
+        const user= users.find((ele)=> ele.email===args.email)
+                    if(!user){
+                        throw new GraphQLError("Failed to find matching result",{
+                            extensions:{statusCode:404}
+                        })
+                    }
+                    return {message:"Done",statusCode:200,data:user}
+    }
+
+    addFollower=(args:{friendId:number; myId:number}):IUser[]=>{
+        const user= users.map((ele:IUser):IUser=> {
+                    if(ele.id===args.friendId){
+                        ele.followers.push(args.myId)
+                        
+                    }
+                    return ele
+                })
+                return users
     }
 }
 

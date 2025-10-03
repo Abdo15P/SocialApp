@@ -5,13 +5,14 @@ config({path: resolve("./config/.env.development")})
 
 
 
+import { createHandler } from 'graphql-http/lib/use/express'
 import express from "express"
 import type {Request, Express,Response} from "express"
 import cors from "cors"
 import helmet from "helmet"
 import {rateLimit} from "express-rate-limit"
 
-import { authRouter,userRouter,postRouter, initializeIo } from './modules'
+import { authRouter,userRouter,postRouter, initializeIo, schema } from './modules'
 // import authController from "./modules/auth/auth.controller"
 // import userController from "./modules/user/user.controller"
 import { BadRequestException, globalErrorHandling } from './utils/response/error.response'
@@ -24,6 +25,7 @@ import {  Socket } from 'socket.io'
 import { HUserDocument } from './DB/models';
 import { JwtPayload } from 'jsonwebtoken';
 import { chatRouter } from './modules/chat';
+import { authentication } from './middleware/authentication.middleware'
 
 // import db from './DB/connection.db'
 
@@ -36,6 +38,7 @@ interface IAuthSocket extends Socket{
         decoded: JwtPayload
     }
 }
+const users=[]
 
 const  bootstrap= async(): Promise<void> =>{
     const app: Express = express()
@@ -52,6 +55,11 @@ const  bootstrap= async(): Promise<void> =>{
         statusCode:429
     })
     app.use(limiter)
+
+    
+
+    app.all("/graphql",authentication(), createHandler({schema:schema,context:(req)=>({user:req.raw.user})}))
+
     //db.connect()
     await connectDB()
 

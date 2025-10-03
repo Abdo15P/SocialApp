@@ -3,6 +3,7 @@ import { RoleEnum } from "../../DB/models/User.model";
 
 
 export const endpoint={
+    welcome:[RoleEnum.user,RoleEnum.admin],
     profile:[RoleEnum.user],
     restoreAccount:[RoleEnum.admin],
     hardDeleteAccount:[RoleEnum.admin],

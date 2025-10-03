@@ -1,3 +1,3 @@
 export {default as router} from './user.controller'
-
-export * from './user.validation'
+export {default as userGQLSchema} from './user.schema.qgl'
+export * from './user.types.gql'

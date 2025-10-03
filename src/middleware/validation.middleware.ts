@@ -3,6 +3,8 @@ import type { ZodError, ZodType } from "zod"
 import { BadRequestException } from "../utils/response/error.response"
 import {z} from 'zod'
 import { Types } from "mongoose"
+import { GraphQLError } from "graphql"
+
 
 type KeyReqType= keyof Request
 type SchemaType= Partial<Record<KeyReqType,ZodType>>
@@ -46,6 +48,27 @@ export const validation=(schema: SchemaType)=>{
 
         return next() as unknown as NextFunction
     }
+}
+export const graphValidation=async <T=any>(schema: ZodType,args:T)=>{
+    
+            const validationResult=await schema.safeParseAsync(args)
+            if(!validationResult.success){
+                const Zerrors = validationResult.error as ZodError
+                
+                throw new GraphQLError("validation error",{
+                    extensions:{
+                        statusCode:400,
+                        issues:{
+                            key:"args",
+                            issues: Zerrors.issues.map((issue)=>{
+                                return {path:issue.path, message:issue.message}
+                            })
+                        }
+                    }
+                })
+            }
+        
+        
 }
 
 export const generalFields={

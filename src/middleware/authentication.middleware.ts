@@ -3,6 +3,7 @@ import { HUserDocument, RoleEnum } from "../DB/models/User.model"
 import { JwtPayload } from "jsonwebtoken"
 import { BadRequestException, ForbiddenException } from "../utils/response/error.response"
 import { decodeToken, TokenEnum } from "../utils/security/token.security"
+import { GraphQLError } from "graphql"
 
 export interface IAuthReq extends Request{
     user: HUserDocument
@@ -49,4 +50,15 @@ export const authorization=(accessRoles:RoleEnum[]=[],tokenType:TokenEnum=TokenE
         req.decoded=decoded
         next()
     }
+}
+
+export const graphAuthorization= async(accessRoles:RoleEnum[]=[],role:RoleEnum)=>{
+    
+
+        if(!accessRoles.includes(role)){
+            throw new GraphQLError("Account not authorized",{extensions:{statusCode:403}})
+        }
+
+        
+    
 }
